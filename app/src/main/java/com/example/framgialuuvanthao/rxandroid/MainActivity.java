@@ -53,6 +53,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+       Observable.interval()
+
     }
 
     private void initViews() {
