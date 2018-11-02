@@ -2,21 +2,21 @@ package com.example.framgialuuvanthao.rxandroid;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.widget.TextView;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
 import rx.Observable;
-import rx.Subscriber;
-import rx.functions.Action1;
-import rx.functions.Func0;
-import rx.functions.Func1;
+import rx.Observer;
 
 public class MainActivity extends AppCompatActivity {
+    public Observable<List<String>> listObservable = Observable.just(getColorList());
     public static String TAG = MainActivity.class.getSimpleName();
-    private TextView txtDisplay;
-    private Integer[] integers = {1, 2, 3};
+    RecyclerView recyclerViewColor;
+    SimpleStringAdapter simpleStringAdapter;
 
 
     @Override
@@ -24,34 +24,38 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         initViews();
-        getANumberObservable()
-                .map(new Func1<Integer, String>() {
-                    @Override
-                    public String call(Integer integer) {
-                        Log.i(TAG, "Operator thread " + Thread.currentThread().getName());
-                        return String.valueOf(integer);
-                    }
-                })
-                .subscribe(new Action1<String>() {
-                    @Override
-                    public void call(String s) {
-                        Log.i(TAG, "Subscriber thread " + Thread.currentThread().getName());
-                    }
-                });
+        listObservable.subscribe(new Observer<List<String>>() {
 
-    }
-
-    private Observable<Integer> getANumberObservable() {
-        return Observable.defer(new Func0<Observable<Integer>>() {
             @Override
-            public Observable<Integer> call() {
-                Log.i(TAG, "Observable thread " + Thread.currentThread().getName());
-                return Observable.just(1);
+            public void onCompleted() {
+            }
+
+            @Override
+            public void onError(Throwable e) {
+            }
+
+            @Override
+            public void onNext(List<String> colors) {
+                simpleStringAdapter.setStrings(colors);
             }
         });
     }
 
+
     private void initViews() {
-        txtDisplay = findViewById(R.id.txtDisplay);
+        simpleStringAdapter = new SimpleStringAdapter(this);
+        recyclerViewColor = findViewById(R.id.recyclerViewColor);
+        recyclerViewColor.setLayoutManager(new LinearLayoutManager(this));
+        recyclerViewColor.setAdapter(simpleStringAdapter);
+    }
+
+    private static List<String> getColorList() {
+        ArrayList<String> colors = new ArrayList<>();
+        colors.add("blue");
+        colors.add("green");
+        colors.add("red");
+        colors.add("chartreuse");
+        colors.add("Van Dyke Brown");
+        return colors;
     }
 }
