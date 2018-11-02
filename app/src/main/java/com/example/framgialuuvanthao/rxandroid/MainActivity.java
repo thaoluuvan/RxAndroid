@@ -9,52 +9,46 @@ import java.util.Arrays;
 
 import rx.Observable;
 import rx.Subscriber;
+import rx.functions.Action1;
+import rx.functions.Func0;
+import rx.functions.Func1;
 
 public class MainActivity extends AppCompatActivity {
+    public static String TAG = MainActivity.class.getSimpleName();
+    private TextView txtDisplay;
+    private Integer[] integers = {1, 2, 3};
 
-    TextView txtDisplay;
-    Integer[] integers = {1, 2, 3};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         initViews();
-        Observable.just(integers).subscribe(new Subscriber<Integer[]>() {
+        getANumberObservable()
+                .map(new Func1<Integer, String>() {
+                    @Override
+                    public String call(Integer integer) {
+                        Log.i(TAG, "Operator thread " + Thread.currentThread().getName());
+                        return String.valueOf(integer);
+                    }
+                })
+                .subscribe(new Action1<String>() {
+                    @Override
+                    public void call(String s) {
+                        Log.i(TAG, "Subscriber thread " + Thread.currentThread().getName());
+                    }
+                });
+
+    }
+
+    private Observable<Integer> getANumberObservable() {
+        return Observable.defer(new Func0<Observable<Integer>>() {
             @Override
-            public void onCompleted() {
-
-            }
-
-            @Override
-            public void onError(Throwable e) {
-
-            }
-
-            public void onNext(Integer[] integers) {
-                txtDisplay.setText("" + integers);
-
+            public Observable<Integer> call() {
+                Log.i(TAG, "Observable thread " + Thread.currentThread().getName());
+                return Observable.just(1);
             }
         });
-
-        Observable.from(integers).subscribe(new Subscriber<Integer>() {
-            @Override
-            public void onCompleted() {
-
-            }
-
-            @Override
-            public void onError(Throwable e) {
-
-            }
-
-            public void onNext(Integer integer) {
-                txtDisplay.setText("" + integer);
-            }
-        });
-
-       Observable.interval()
-
     }
 
     private void initViews() {
