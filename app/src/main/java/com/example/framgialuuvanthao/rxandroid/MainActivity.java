@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -14,6 +13,7 @@ import java.util.concurrent.Callable;
 
 import rx.Observable;
 import rx.Observer;
+import rx.Scheduler;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
@@ -23,12 +23,31 @@ public class MainActivity extends AppCompatActivity {
     RecyclerView recyclerViewColor;
     SimpleStringAdapter simpleStringAdapter;
     Observable<List<String>> tvShowObservable;
+    Observer<List<String>> tvShowObserver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         initViews();
+
+        tvShowObserver = new Observer<List<String>>() {
+            @Override
+            public void onCompleted() {
+
+            }
+
+            @Override
+            public void onError(Throwable e) {
+
+            }
+
+            @Override
+            public void onNext(List<String> tvShows) {
+                Log.d(TAG, "onNext: " + Thread.currentThread().getName());
+                simpleStringAdapter.setStrings(tvShows);
+            }
+        };
 
         tvShowObservable = Observable.fromCallable(new Callable<List<String>>() {
             @Override
@@ -39,24 +58,9 @@ public class MainActivity extends AppCompatActivity {
         });
 
         tvShowObservable
-                .subscribeOn(Schedulers.io())
+                .subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer<List<String>>() {
-                    @Override
-                    public void onCompleted() {
-                        Toast.makeText(MainActivity.this, "Loaded data", Toast.LENGTH_SHORT).show();
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                    }
-
-                    @Override
-                    public void onNext(List<String> tvShows) {
-                        Log.d(TAG, "onNext: " + Thread.currentThread().getName());
-                        simpleStringAdapter.setStrings(tvShows);
-                    }
-                });
+                .subscribe(tvShowObserver);
     }
 
     private void initViews() {
