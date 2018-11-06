@@ -4,16 +4,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
-import android.widget.Toast;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
-
-import rx.Observable;
-import rx.Observer;
-import rx.Scheduler;
+import rx.Single;
+import rx.SingleSubscriber;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
@@ -22,8 +17,7 @@ public class MainActivity extends AppCompatActivity {
     public static String TAG = MainActivity.class.getSimpleName();
     RecyclerView recyclerViewColor;
     SimpleStringAdapter simpleStringAdapter;
-    Observable<List<String>> tvShowObservable;
-    Observer<List<String>> tvShowObserver;
+    Single<List<String>> tvShowSingle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,36 +25,24 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         initViews();
 
-        tvShowObserver = new Observer<List<String>>() {
-            @Override
-            public void onCompleted() {
-
-            }
-
-            @Override
-            public void onError(Throwable e) {
-
-            }
-
-            @Override
-            public void onNext(List<String> tvShows) {
-                Log.d(TAG, "onNext: " + Thread.currentThread().getName());
-                simpleStringAdapter.setStrings(tvShows);
-            }
-        };
-
-        tvShowObservable = Observable.fromCallable(new Callable<List<String>>() {
+        tvShowSingle= Single.fromCallable(new Callable<List<String>>() {
             @Override
             public List<String> call() throws Exception {
-                Log.d(TAG, "onNext: " + Thread.currentThread().getName());
                 return getColorList();
             }
         });
 
-        tvShowObservable
-                .subscribeOn(Schedulers.newThread())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(tvShowObserver);
+        tvShowSingle.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new SingleSubscriber<List<String>>() {
+            @Override
+            public void onSuccess(List<String> tvShows) {
+                simpleStringAdapter.setStrings(tvShows);
+            }
+
+            @Override
+            public void onError(Throwable error) {
+
+            }
+        });
     }
 
     private void initViews() {
